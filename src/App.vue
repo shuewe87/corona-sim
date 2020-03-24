@@ -119,7 +119,7 @@ export default {
     }
     console.log(w);
     var ratio = 1;
-    var humanDens = 0.0045;
+    var humanDens = 0.0035;//0.0045
     this.handleResize();
     console.log("Window size");
     console.log(this.width);
@@ -230,7 +230,7 @@ export default {
     },
     /**Gets the average affect of infected humans on others. */
     getAvgAffect: function() {
-      if (this.survived.length < 20) {
+      if (this.survived.length < 30) {
         return 0;
       }
       var sanAffect = 0;
@@ -268,6 +268,7 @@ export default {
       this.humans = getHumansList(this.count, this.width, this.height);
       this.populateLists();
       this.days = 0;
+      this.maxAvgInfectRate=0;
     }
   },
   created: function() {
@@ -298,8 +299,8 @@ function getHumansList(count, width, height) {
       timeInfected: 0,
       timeIll: 10 + (Math.random() - 0.5) * 5,
       health: s,
-      dx: Math.random() * 10 - 5,
-      dy: Math.random() * 10 - 5,
+      dx: (Math.random() - 0.5) * 25,
+      dy: (Math.random() - 0.5) * 25,
       affectedhealth: 0
     });
   }
@@ -331,6 +332,9 @@ function hasSurvived(human) {
  * @property probability to be infected (0..1) 0 -> no infection, 1 -> 100% will be infected
  */
 function infectHuman(human, infected, probability) {
+  if(infected.timeInfected <4){
+    return;
+  }
   if (
     Math.sqrt(
       (human.x - infected.x) * (human.x - infected.x) +
@@ -342,8 +346,8 @@ function infectHuman(human, infected, probability) {
   if (Math.random() > probability) {
     return;
   }
-  human.health = human.health - 50;
-  infected.affectedhealth += 50;
+  human.health = human.health - 100;
+  infected.affectedhealth += 100;
   if (human.health <= 0) {
     human.health = 0;
   }
