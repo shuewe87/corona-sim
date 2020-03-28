@@ -1,6 +1,6 @@
 <template>
   <div class="sim-container" :style="style">
-    <Human v-for="human in humans" :key="human.id" v-bind:health="human.health" v-bind:cx="human.x" v-bind:cy="human.y" v-bind:timeInfected="human.timeInfected" />
+    <Human v-for="human in humans" :key="human.id" v-bind:health="human.health" v-bind:cx="human.x" v-bind:cy="human.y" v-bind:timeInfected="human.timeInfected" v-bind:radius="radius" />
   </div>
 </template>
 
@@ -12,7 +12,8 @@ export default {
   props: {
     humans: Array,
     width: String,
-    height: String
+    height: String,
+    radius: Number
   },
   computed: {
       style () {

@@ -14,10 +14,16 @@
       <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <script>
-      var simWidth = 4000;
-      var maxWinWidth = 2000;
+      var simWidth = 800;
+      var maxWinWidth = 800;
+      var lang = "de";
+      var r0=3;
+      var scaleHuman = 20;
+      var humanDense=0.01;
+      var timeStep = 0.25;
+      var initialRate= 0.1;
     </script>
-    <div class="container">
+    <div class="app-container">
       <div id="app">
       </div>
   </div>
@@ -26,7 +32,7 @@
 </html>
 
 <style>
-  #container{
+  #app-container{
     width: 100% ;
     overflow: hidden;
   }

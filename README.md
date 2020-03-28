@@ -1,4 +1,5 @@
 # corona-sim
+This vue app simulates the distribution of an virus like corona. This app runs for corona parameters [here](https://www.shuewe.de/de/projects/corona-simulation).
 
 ## Project setup
 ```

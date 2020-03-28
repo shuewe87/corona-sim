@@ -1,0 +1,19 @@
+{
+    "days": "{0} Tage",
+    "status": {
+        "notInfected": "Nicht infiziert",
+        "ill": "Infiziert",
+        "survived": "Überlebt",
+        "dead": "Tod"
+    },
+    "infectionRate": {
+        "title": "Infektionsrate",
+        "veryLow": "Sehr niedrig ({0})",
+        "low": "Niedrig ({0})",
+        "medium": "Mittel ({0})",
+        "initial": "Unverändert ({0})"
+    },
+    "maxInfected":"Max. Anteil Infizierter",
+    "avgAffect":"Durchschnittliche Infektionsrate",
+    "reset":"Zurrück setzen"
+}

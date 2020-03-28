@@ -1,7 +1,7 @@
 <template>
     <div :style="fullSize">
     <svg :style="fullSize">
-        <circle v-bind:cx="cx" v-bind:cy="cy" r="5" stroke="black"  :fill="getColor" />
+        <circle v-bind:cx="cx" v-bind:cy="cy" v-bind:r="radius" stroke="grey"  :fill="getColor" opacity=0.7 />
     </svg>
     </div>
 </template>
@@ -13,7 +13,8 @@ export default {
     cx: Number,
     cy: Number,
     timeInfected: Number,
-    health: Number
+    health: Number,
+    radius: Number
   },
   computed:{ 
       fullSize(){
