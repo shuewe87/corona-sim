@@ -1,7 +1,7 @@
 <template>
     <div :style="fullSize">
     <svg :style="fullSize">
-        <circle v-bind:cx="cx" v-bind:cy="cy" v-bind:r="radius" stroke="grey"  :fill="getColor" opacity=0.7 />
+        <circle v-bind:cx="cx" v-bind:cy="cy" v-bind:r="radius" stroke="grey"  :fill="getColor" opacity=0.6 />
     </svg>
     </div>
 </template>

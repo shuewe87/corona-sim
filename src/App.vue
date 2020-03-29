@@ -136,6 +136,7 @@
 <script>
 import SimContainer from "./components/SimContainer.vue";
 import Human from "./components/Human.vue";
+import { Region } from "./region.js";
 
 export default {
   name: "App",
@@ -144,6 +145,9 @@ export default {
     Human
   },
   data: function() {
+    var r1 = new Region(0, 1, 0, 1, 0.1);
+    console.log(r1.contains(0.5, 0.5));
+    console.log(r1.contains(0.5, 1.5));
     console.log("simWidth");
     var w = 800;
     if (window.simWidth != undefined) {
@@ -175,6 +179,30 @@ export default {
     }
 
     this.height = this.width * ratio;
+    this.regions = new Map();
+    var regs = [];
+    var nReg = 10;
+    var regHeight = this.height / nReg;
+    var regWidth = this.width / nReg;
+    for (var i = 0; i < nReg; i++) {
+      for (var j = 0; j < nReg; j++) {
+        regs.push(
+          new Region(
+            "region_" + i + "_" + j,
+            i * regWidth,
+            (i + 1) * regWidth,
+            j * regHeight,
+            (j + 1) * regHeight,
+            radi
+          )
+        );
+      }
+    }
+    for (i = 0; i < regs.length; i++) {
+      regs[i].infectable = [];
+      this.regions.set(regs[i].name, regs[i]);
+    }
+
     this.count = humanDens * this.height * this.width;
     console.log("Count:");
     console.log(this.count);
@@ -190,6 +218,7 @@ export default {
       this.timeStep,
       this.initialRate
     );
+    humanList.forEach(human => this.sortHumanRegion(human));
 
     return {
       humans: humanList,
@@ -223,7 +252,7 @@ export default {
   methods: {
     /**
      * Calculates the distance between two humans.<p>
-     * 
+     *
      * @param human1
      * @param human2
      */
@@ -251,8 +280,10 @@ export default {
       if (window.debugInfect) {
         console.log("Iterate over infected..");
       }
-      this.infectable.forEach(
-        infected => this.infectHuman(human, infected) //Checks timeInfected (ignored if timeInfected < 4)
+      human.regions.forEach(regionName =>
+        this.regions.get(regionName).infectable.forEach(
+          infected => this.infectHuman(human, infected) //Checks timeInfected (ignored if timeInfected < 4)
+        )
       );
     },
     /**
@@ -311,7 +342,7 @@ export default {
     },
     /**
      * Formats a i18n key with given number value.<p>
-     * 
+     *
      * @param key to be resolved in i18n
      * @param val number value to be formatted
      */
@@ -364,7 +395,6 @@ export default {
         console.log("infect!");
       }
       if (!isHealthy(human)) {
-        console.log("Double infect");
         return;
       }
       human.health = human.health - 100;
@@ -372,6 +402,32 @@ export default {
       if (human.health <= 0) {
         human.health = 0;
       }
+    },
+    /**
+     * Move a human.<p>
+     *
+     * @param maxWidth maxWidth in simulation
+     * @param maxHeight maxHeight in simulation
+     */
+    moveHuman: function(human, maxWidth, maxHeight) {
+      if (isDead(human)) {
+        return;
+      }
+      human.x = human.x + human.dx;
+      human.y = human.y + human.dy;
+      if (human.x < 0) {
+        human.x = maxWidth + human.x;
+      }
+      if (human.y < 0) {
+        human.y = maxHeight + human.y;
+      }
+      if (human.x > maxWidth) {
+        human.x = human.x - maxWidth;
+      }
+      if (human.y > maxHeight) {
+        human.y = human.y - maxHeight;
+      }
+      this.sortHumanRegion(human);
     },
     /** Populate lists for healthy, infected, dead and survived people. */
     populateLists: function() {
@@ -381,7 +437,11 @@ export default {
       this.dead.length = 0;
       this.survived.length = 0;
       this.neverInfected.length = 0;
-      for (var i = 0; i < this.humans.length; i++) {
+      var regNames = Array.from(this.regions.keys());
+      for (var i = 0; i < regNames.length; i++) {
+        this.regions.get(regNames[i]).infectable.length = 0;
+      }
+      for (i = 0; i < this.humans.length; i++) {
         if (isHealthy(this.humans[i])) {
           this.healthy.push(this.humans[i]);
           if (hasSurvived(this.humans[i])) {
@@ -396,6 +456,9 @@ export default {
             this.infected.push(this.humans[i]);
             if (isInfectable(this.humans[i])) {
               this.infectable.push(this.humans[i]);
+              this.humans[i].regions.forEach(regionName =>
+                this.regions.get(regionName).infectable.push(this.humans[i])
+              );
             }
           }
         }
@@ -411,7 +474,9 @@ export default {
       if (waitTime < 0) {
         waitTime = 0;
       }
-      console.log("Time to wait between frames " + waitTime);
+      if (window.debug) {
+        console.log("Time to wait between frames " + waitTime);
+      }
       if (this.remSteps > 0) {
         setTimeout(this.run, waitTime);
       }
@@ -454,6 +519,20 @@ export default {
       }
     },
     /**
+     * Sort human to regions.<p>
+     *
+     * @param human to be sorted to regions
+     */
+    sortHumanRegion: function(human) {
+      human.regions.length = 0;
+      var regNames = Array.from(this.regions.keys());
+      for (var i = 0; i < regNames.length; i++) {
+        if (this.regions.get(regNames[i]).contains(human.x, human.y)) {
+          human.regions.push(regNames[i]);
+        }
+      }
+    },
+    /**
      * Starts the simulation for given number of days.<p>
      * @param days to be simulated
      */
@@ -463,7 +542,6 @@ export default {
     },
     /**Performs the next time step. */
     update: function() {
-      this.humans.forEach(human => moveHuman(human, this.width, this.height));
       this.neverInfected.forEach(human => this.changeHealthy(human));
       this.infected.forEach(human => this.changeInfected(human));
 
@@ -477,6 +555,9 @@ export default {
       }
 
       this.days += this.timeStep;
+      this.humans.forEach(human =>
+        this.moveHuman(human, this.width, this.height)
+      );
       this.populateLists();
       if (window.debug) {
         console.log("Time: " + this.days);
@@ -491,10 +572,8 @@ export default {
   }
 };
 
-
-
 /**
- * Creates the initial list of humans with 0.1% infected people.<p>
+ * Creates the initial list of humans with given rate of infected people.<p>
  * @param count The number of humans to be simulated
  * @param width The width of the enclosing div
  * @param height The height of the enclosing div
@@ -515,11 +594,12 @@ function getHumansList(count, width, height, radius, timeStep, initialRate) {
       x: Math.random() * width,
       y: Math.random() * height,
       timeInfected: 0,
-      timeIll: 9 + (Math.random() - 0.5) * 1,
+      timeIll: 9 + (Math.random() - 0.5) * 0.5,
       health: s,
       dx: 25 * (sigmaX * radius * timeStep + (Math.random() - 0.5)),
       dy: 25 * (sigmaY * radius * timeStep + (Math.random() - 0.5)),
-      affectedhealth: 0
+      affectedhealth: 0,
+      regions: []
     });
   }
   if (!oneInfected) {
@@ -528,11 +608,9 @@ function getHumansList(count, width, height, radius, timeStep, initialRate) {
   return jsonArr;
 }
 
-
-
 /**
  * Calculates a radius for humans to realize the given infection rate r0.<p>
- * 
+ *
  * @param r0 infection rate
  * @param infectedTime time a human can infect other people
  * @param timeStep time step
@@ -545,7 +623,7 @@ function getRadius(r0, infectedTime, timeStep, dens) {
 
 /**
  * Checks if human has survived infect.<p>
- * 
+ *
  * @param human the human to check
  */
 function hasSurvived(human) {
@@ -554,7 +632,7 @@ function hasSurvived(human) {
 
 /**
  * Checks if given human is dead.<p>
- * 
+ *
  * @param human the human to check
  */
 function isDead(human) {
@@ -563,7 +641,7 @@ function isDead(human) {
 
 /**
  * Checks if human is healthy.<p>
- * 
+ *
  * @param human the human to check
  */
 function isHealthy(human) {
@@ -572,37 +650,11 @@ function isHealthy(human) {
 
 /**
  * Checks if human is infectable.<p>
- * 
+ *
  * @param human the human to check
  */
 function isInfectable(human) {
   return human.timeInfected >= 4;
-}
-
-/**
- * Move a human.<p>
- * 
- * @param maxWidth maxWidth in simulation
- * @param maxHeight maxHeight in simulation
- */
-function moveHuman(human, maxWidth, maxHeight) {
-  if (isDead(human)) {
-    return;
-  }
-  human.x = human.x + human.dx;
-  human.y = human.y + human.dy;
-  if (human.x < 0) {
-    human.x = maxWidth + human.x;
-  }
-  if (human.y < 0) {
-    human.y = maxHeight + human.y;
-  }
-  if (human.x > maxWidth) {
-    human.x = maxWidth - human.x;
-  }
-  if (human.y > maxHeight) {
-    human.y = maxHeight - human.y;
-  }
 }
 </script>
 
